@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深层对话</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #111827, #1e1b4b, #111827);
+            color: #fef3c7;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 背景光晕效果 */
+        .bg-glow {
+            position: fixed;
+            inset: 0;
+            opacity: 0.2;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-1 {
+            position: absolute;
+            top: 25%;
+            left: 25%;
+            width: 384px;
+            height: 384px;
+            background: #6366f1;
+            border-radius: 50%;
+            filter: blur(96px);
+        }
+
+        .glow-2 {
+            position: absolute;
+            bottom: 25%;
+            right: 25%;
+            width: 384px;
+            height: 384px;
+            background: #a855f7;
+            border-radius: 50%;
+            filter: blur(96px);
+        }
+
+        /* 主容器 */
+        .container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        /* 文字区域 */
+        .content {
+            max-width: 48rem;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-top: 6rem;
+        }
+
+        .text-area {
+            min-height: 400px;
+        }
+
+        .line {
+            text-align: center;
+            margin-bottom: 1.25rem;
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.025em;
+            line-height: 1.75;
+            transition: opacity 1s ease;
+        }
+
+        .line.faded {
+            opacity: 0.5;
+        }
+
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+                filter: blur(5px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+                filter: blur(0);
+            }
+        }
+
+        .line.animate {
+            animation: fadeIn 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 过渡效果 */
+        .content.transitioning {
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        /* 按钮区域 */
+        .button-area {
+            position: relative;
+            z-index: 10;
+            padding-bottom: 3rem;
+            height: 6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button {
+            padding: 0.75rem 2rem;
+            background: transparent;
+            border: 1px solid rgba(254, 243, 199, 0.3);
+            color: #fef3c7;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+
+        button.visible {
+            opacity: 1;
+        }
+
+        button:hover {
+            background: rgba(254, 243, 199, 0.1);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .line {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景光晕 -->
+    <div class="bg-glow">
+        <div class="glow-1"></div>
+        <div class="glow-2"></div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <div class="content" id="content">
+            <div class="text-area" id="textArea"></div>
+        </div>
+
+        <div class="button-area">
+            <button id="actionButton"></button>
+        </div>
+    </div>
+
+    <script>
+        const sections = [
+            [
+                "你好。",
+                "欢迎来到这个空间。",
+                "这里没有正确答案。",
+                "只有你的声音。"
+            ],
+            [
+                "我们即将开始一场特殊的对话。",
+                "不是测试。",
+                "不是评判。",
+                "而是一次向内的旅程。"
+            ],
+            [
+                "你如何看待人工智能的道德边界？",
+                "当社交媒体占据生活，你感受到了什么？",
+                "这些问题背后，藏着你思考的方式。",
+                "你选择的词语。",
+                "你停顿的瞬间。",
+                "你回避或深入的时刻。"
+            ],
+            [
+                "它们勾勒出一个轮廓。",
+                "那是你认知世界的结构。",
+                "也是你无意识中，塑造自己的方式。"
+            ],
+            [
+                "大多数时候，我们活在表层。",
+                "回应着外界的期待。",
+                "重复着习惯的模式。",
+                "但今天，我们邀请你停下来。"
+            ],
+            [
+                "看见你如何思考。",
+                "看见你如何选择。",
+                "看见那个在思维深处的你。"
+            ],
+            [
+                "准备好了吗？",
+                "让我们开始这场对话。",
+                "从第一个问题开始。",
+                "从第一次真正的聆听开始。"
+            ]
+        ];
+
+        let currentSection = 0;
+        let currentLine = 0;
+        let lineElements = [];
+        let lineTimer = null;
+        let buttonTimer = null;
+
+        const textArea = document.getElementById('textArea');
+        const content = document.getElementById('content');
+        const actionButton = document.getElementById('actionButton');
+
+        function showLine() {
+            if (currentLine >= sections[currentSection].length) {
+                // 段落完成，显示按钮
+                buttonTimer = setTimeout(() => {
+                    if (currentSection >= sections.length - 1) {
+                        actionButton.textContent = '重新体验';
+                    } else {
+                        actionButton.textContent = '继续';
+                    }
+                    actionButton.classList.add('visible');
+                }, 1500);
+                return;
+            }
+
+            // 创建新行
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'line animate';
+            lineDiv.textContent = sections[currentSection][currentLine];
+            textArea.appendChild(lineDiv);
+            lineElements.push(lineDiv);
+
+            // 让之前的行变淡
+            lineElements.forEach((el, index) => {
+                if (index < lineElements.length - 1) {
+                    el.classList.add('faded');
+                    el.classList.remove('animate');
+                }
+            });
+
+            currentLine++;
+            lineTimer = setTimeout(showLine, 2000);
+        }
+
+        function handleContinue() {
+            if (currentSection >= sections.length - 1) {
+                // 重新开始
+                restart();
+                return;
+            }
+
+            // 清除定时器
+            clearTimeout(lineTimer);
+            clearTimeout(buttonTimer);
+
+            // 隐藏按钮
+            actionButton.classList.remove('visible');
+
+            // 过渡效果
+            content.classList.add('transitioning');
+
+            setTimeout(() => {
+                // 清空文字区域
+                textArea.innerHTML = '';
+                lineElements = [];
+                currentLine = 0;
+                currentSection++;
+
+                // 恢复显示
+                content.classList.remove('transitioning');
+
+                // 开始新段落
+                showLine();
+            }, 800);
+        }
+
+        function restart() {
+            clearTimeout(lineTimer);
+            clearTimeout(buttonTimer);
+            
+            actionButton.classList.remove('visible');
+            content.classList.add('transitioning');
+
+            setTimeout(() => {
+                textArea.innerHTML = '';
+                lineElements = [];
+                currentSection = 0;
+                currentLine = 0;
+                content.classList.remove('transitioning');
+                showLine();
+            }, 800);
+        }
+
+        // 绑定按钮点击事件
+        actionButton.addEventListener('click', handleContinue);
+
+        // 开始播放
+        showLine();
+    </script>
+</body>
+</html>
