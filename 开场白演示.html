@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>深层对话</title>
+    <title>认识你自己</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+
     <style>
         * {
             margin: 0;
@@ -12,12 +18,16 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: "ZCOOL KuaiLe", sans-serif;
+            font-weight: 400;
+            font-style: normal;
+
             min-height: 100vh;
             background: linear-gradient(to bottom, #111827, #1e1b4b, #111827);
             color: #fef3c7;
             overflow-x: hidden;
             position: relative;
+            cursor: pointer;
         }
 
         /* 背景光晕效果 */
@@ -71,7 +81,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding-top: 6rem;
+            padding-top: 9rem;
         }
 
         .text-area {
@@ -80,8 +90,8 @@
 
         .line {
             text-align: center;
-            margin-bottom: 1.25rem;
-            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 2rem;
             font-weight: 300;
             letter-spacing: 0.025em;
             line-height: 1.75;
@@ -116,37 +126,48 @@
             transition: opacity 0.8s ease;
         }
 
-        /* 按钮区域 */
-        .button-area {
-            position: relative;
-            z-index: 10;
-            padding-bottom: 3rem;
-            height: 6rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        button {
-            padding: 0.75rem 2rem;
-            background: transparent;
-            border: 1px solid rgba(254, 243, 199, 0.3);
-            color: #fef3c7;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            letter-spacing: 0.1em;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-            transition: all 0.5s ease;
+        /* 提示区域 */
+        .hint-area {
+            position: fixed;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            text-align: center;
             opacity: 0;
+            transition: opacity 0.8s ease;
         }
 
-        button.visible {
+        .hint-area.visible {
             opacity: 1;
         }
 
-        button:hover {
-            background: rgba(254, 243, 199, 0.1);
+        .hint-text {
+            color: rgba(254, 243, 199, 0.6);
+            font-size: 0.875rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .hint-icon {
+            width: 24px;
+            height: 24px;
+            margin: 0 auto;
+            border: 2px solid rgba(254, 243, 199, 0.4);
+            border-radius: 50%;
+            position: relative;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.1);
+            }
         }
 
         /* 响应式 */
@@ -165,14 +186,16 @@
     </div>
 
     <!-- 主容器 -->
-    <div class="container">
+    <div class="container" id="clickArea">
         <div class="content" id="content">
             <div class="text-area" id="textArea"></div>
         </div>
+    </div>
 
-        <div class="button-area">
-            <button id="actionButton"></button>
-        </div>
+    <!-- 提示区域 -->
+    <div class="hint-area" id="hintArea">
+        <div class="hint-text" id="hintText">点击屏幕继续</div>
+        <div class="hint-icon"></div>
     </div>
 
     <script>
@@ -225,22 +248,26 @@
         let currentLine = 0;
         let lineElements = [];
         let lineTimer = null;
-        let buttonTimer = null;
+        let hintTimer = null;
+        let canProceed = false;
 
         const textArea = document.getElementById('textArea');
         const content = document.getElementById('content');
-        const actionButton = document.getElementById('actionButton');
+        const clickArea = document.getElementById('clickArea');
+        const hintArea = document.getElementById('hintArea');
+        const hintText = document.getElementById('hintText');
 
         function showLine() {
             if (currentLine >= sections[currentSection].length) {
-                // 段落完成，显示按钮
-                buttonTimer = setTimeout(() => {
+                // 段落完成，显示提示
+                canProceed = true;
+                hintTimer = setTimeout(() => {
                     if (currentSection >= sections.length - 1) {
-                        actionButton.textContent = '重新体验';
+                        hintText.textContent = '点击屏幕重新体验';
                     } else {
-                        actionButton.textContent = '继续';
+                        hintText.textContent = '点击屏幕继续';
                     }
-                    actionButton.classList.add('visible');
+                    hintArea.classList.add('visible');
                 }, 1500);
                 return;
             }
@@ -264,7 +291,9 @@
             lineTimer = setTimeout(showLine, 2000);
         }
 
-        function handleContinue() {
+        function handleClick() {
+            if (!canProceed) return;
+
             if (currentSection >= sections.length - 1) {
                 // 重新开始
                 restart();
@@ -273,10 +302,11 @@
 
             // 清除定时器
             clearTimeout(lineTimer);
-            clearTimeout(buttonTimer);
+            clearTimeout(hintTimer);
 
-            // 隐藏按钮
-            actionButton.classList.remove('visible');
+            // 隐藏提示
+            hintArea.classList.remove('visible');
+            canProceed = false;
 
             // 过渡效果
             content.classList.add('transitioning');
@@ -298,9 +328,10 @@
 
         function restart() {
             clearTimeout(lineTimer);
-            clearTimeout(buttonTimer);
+            clearTimeout(hintTimer);
             
-            actionButton.classList.remove('visible');
+            hintArea.classList.remove('visible');
+            canProceed = false;
             content.classList.add('transitioning');
 
             setTimeout(() => {
@@ -313,8 +344,8 @@
             }, 800);
         }
 
-        // 绑定按钮点击事件
-        actionButton.addEventListener('click', handleContinue);
+        // 绑定点击事件
+        clickArea.addEventListener('click', handleClick);
 
         // 开始播放
         showLine();
