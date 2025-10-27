@@ -86,6 +86,7 @@
 
         .text-area {
             min-height: 400px;
+            transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .line {
@@ -250,12 +251,24 @@
         let lineTimer = null;
         let hintTimer = null;
         let canProceed = false;
+        let currentOffset = 0; // 当前偏移量
 
         const textArea = document.getElementById('textArea');
         const content = document.getElementById('content');
         const clickArea = document.getElementById('clickArea');
         const hintArea = document.getElementById('hintArea');
         const hintText = document.getElementById('hintText');
+
+        // 计算单行高度（包括margin）
+        function getLineHeight() {
+            if (lineElements.length > 0) {
+                const style = window.getComputedStyle(lineElements[0]);
+                const height = lineElements[0].offsetHeight;
+                const marginBottom = parseFloat(style.marginBottom);
+                return height + marginBottom;
+            }
+            return 80; // 默认估算值
+        }
 
         function showLine() {
             if (currentLine >= sections[currentSection].length) {
@@ -287,6 +300,13 @@
                 }
             });
 
+            // 检查是否需要上浮
+            if (lineElements.length > 4) {
+                const lineHeight = getLineHeight();
+                currentOffset += lineHeight;
+                textArea.style.transform = `translateY(-${currentOffset}px)`;
+            }
+
             currentLine++;
             lineTimer = setTimeout(showLine, 2000);
         }
@@ -317,6 +337,8 @@
                 lineElements = [];
                 currentLine = 0;
                 currentSection++;
+                currentOffset = 0; // 重置偏移量
+                textArea.style.transform = 'translateY(0)';
 
                 // 恢复显示
                 content.classList.remove('transitioning');
@@ -339,6 +361,8 @@
                 lineElements = [];
                 currentSection = 0;
                 currentLine = 0;
+                currentOffset = 0;
+                textArea.style.transform = 'translateY(0)';
                 content.classList.remove('transitioning');
                 showLine();
             }, 800);
